@@ -42,6 +42,35 @@ app.get('/api/health', (req, res) =>
   res.json({ success: true, timestamp: new Date(), env: process.env.NODE_ENV })
 );
 
+
+// ── Email Test Route ──────────────────────────────────────────────────────────
+app.get('/api/test-email', async (req, res) => {
+  try {
+    const nodemailer = require('nodemailer');
+    const vars = {
+      EMAIL_USER:  process.env.EMAIL_USER  ? 'SET' : 'MISSING',
+      EMAIL_PASS:  process.env.EMAIL_PASS  ? 'SET' : 'MISSING',
+      OWNER_EMAIL: process.env.OWNER_EMAIL || 'MISSING',
+    };
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !process.env.OWNER_EMAIL) {
+      return res.json({ success: false, message: 'Env vars missing', vars });
+    }
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+    });
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: process.env.OWNER_EMAIL,
+      subject: 'Mobile Shop Email Test',
+      text: 'Email is working!'
+    });
+    res.json({ success: true, message: 'Test email sent!', to: process.env.OWNER_EMAIL, vars });
+  } catch (err) {
+    res.json({ success: false, error: err.message, code: err.code });
+  }
+});
+
 // 404
 app.use((req, res) =>
   res.status(404).json({ success: false, message: 'Route not found' })
